@@ -23,50 +23,6 @@ function main() {
    */
   const svg = document.querySelector("#svgCanvas") as SVGElement & HTMLElement;
 
-  // Example on adding an element
-//   const circle = document.createElementNS(svg.namespaceURI, "circle");
-//   circle.setAttribute("r", "15");
-//   circle.setAttribute("cx", "300");
-//   circle.setAttribute("cy", "575");
-//   circle.setAttribute(
-//     "style",
-//     "fill: green; stroke: green; stroke-width: 1px;"
-//   )
-//   svg.appendChild(circle);
-// }
-     
-    //const frog = document.createElementNS(svg.namespaceURI, "circle");
-    // Object.entries({
-    //     r: "15",
-    //     cx: "300",
-    //     cy: "575",
-    //     style: "fill: green; stroke: green; stroke-width: 1px;"
-    // }).forEach(([key, value]) => frog.setAttribute(key, value));
-
-    // frog.setAttribute("r", "15");
-    // frog.setAttribute("cx", "300");
-    // frog.setAttribute("cy", "575");
-    // frog.setAttribute(
-    //   "style",
-    //   "fill: green; stroke: green; stroke-width: 1px;"
-    // );
-
-    // Object.entries(frog).forEach(([key, value]) => frog.setAttribute(key, value));
-    
-    // svg.appendChild(frog);
-
-
-    // const keydown = fromEvent<KeyboardEvent>(document, "keydown"),
-    // wKey = keydown.pipe(filter(key => key.key == "w"), map(_ => ["y", -10])),
-    // aKey = keydown.pipe(filter(key => key.key == "a"), map(_ => ["x", -10])),
-    // sKey = keydown.pipe(filter(key => key.key == "s"), map(_ => ["y", 10])),
-    // dKey = keydown.pipe(filter(key => key.key == "d"), map(_ => ["x", 10]))
-
-    //   function coord(curr: string, value: number) {
-    //     frog.setAttribute(curr, String(value + Number(frog.getAttribute(curr))));
-    //   }
-
-    // merge(wKey, aKey, sKey, dKey).subscribe(coord as any);
 
     // let frog = document.getElementById("frog-svgrepo-com.svg") as SVGElement & HTMLElement;
     let frog = document.createElementNS(svg.namespaceURI, "rect");
@@ -78,25 +34,25 @@ function main() {
     svg.appendChild(frog);
   
     const key = fromEvent<KeyboardEvent>(document, "keydown")
+
+    const mapKeys : (keyClicked:string) => (distance:number) => () => void = 
+      keyClicked => distance => () => frog.setAttribute(keyClicked, `${parseFloat(frog.getAttribute(keyClicked) as string) + distance}`)
   
-    const setWrapper : (_:string) => (__:number) => () => void = 
-      key => number => () => frog.setAttribute(key, `${parseFloat(frog.getAttribute(key) as string) + number}`)
   
+    const move_left = key.pipe(filter(({code}) => code == "ArrowLeft"))
+      .pipe(map(() => mapKeys('x')(-10)))
   
-    const left = key.pipe(filter(({code}) => code == "ArrowLeft"))
-      .pipe(map(() => setWrapper('x')(-10)))
+    const move_up = key.pipe(filter(({code}) => code == "ArrowUp"))
+      .pipe(map(() => mapKeys('y')(-10)))
   
-    const up = key.pipe(filter(({code}) => code == "ArrowUp"))
-      .pipe(map(() => setWrapper('y')(-10)))
+    const move_right = key.pipe(filter(({code}) => code == "ArrowRight"))
+      .pipe(map(() => mapKeys('x')(10)))
   
-    const right = key.pipe(filter(({code}) => code == "ArrowRight"))
-      .pipe(map(() => setWrapper('x')(10)))
-  
-    const down = key.pipe(filter(({code}) => code == "ArrowDown"))
-      .pipe(map(() => setWrapper('y')(10)))
+    const move_down = key.pipe(filter(({code}) => code == "ArrowDown"))
+      .pipe(map(() => mapKeys('y')(10)))
         
-    merge(left, down, up, right)
-    .subscribe(x => x())
+    merge(move_left, move_down, move_up, move_right)
+    .subscribe(_ => _())
   }
 
 // The following simply runs your main function on window load.  Make sure to leave it in place.
