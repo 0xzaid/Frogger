@@ -33,27 +33,23 @@ function main() {
     }).forEach(([key,val])=>frog.setAttribute(key,String(val)))
     svg.appendChild(frog);
   
-    const key = fromEvent<KeyboardEvent>(document, "keydown")
+    const keydown = fromEvent<KeyboardEvent>(document, "keydown")
 
     const mapKeys : (keyClicked:string) => (distance:number) => () => void = 
-      keyClicked => distance => () => frog.setAttribute(keyClicked, `${parseFloat(frog.getAttribute(keyClicked) as string) + distance}`)
+      keyClicked => distance => () => frog.setAttribute(keyClicked, `${parseFloat(frog.getAttribute(keyClicked) as string) + distance}`),
+      wKey = keydown.pipe(filter(k => k.key == "w"), map(_ => ["y", -10])),
+      aKey = keydown.pipe(filter(k => k.key == "a"), map(_ => ["x", -10])),
+      sKey = keydown.pipe(filter(k => k.key == "s"), map(_ => ["y", 10])),
+      dKey = keydown.pipe(filter(k => k.key == "d"), map(_ => ["x", 10]))
+
+      function movement(data: [string, number]) {
+        frog.setAttribute(data[0], String(data[1] + Number(frog.getAttribute(data[0]))))
+      }
   
+      merge(wKey, aKey, sKey, dKey).subscribe(movement as any)
+
+    }
   
-    const move_left = key.pipe(filter(({code}) => code == "ArrowLeft"))
-      .pipe(map(() => mapKeys('x')(-10)))
-  
-    const move_up = key.pipe(filter(({code}) => code == "ArrowUp"))
-      .pipe(map(() => mapKeys('y')(-10)))
-  
-    const move_right = key.pipe(filter(({code}) => code == "ArrowRight"))
-      .pipe(map(() => mapKeys('x')(10)))
-  
-    const move_down = key.pipe(filter(({code}) => code == "ArrowDown"))
-      .pipe(map(() => mapKeys('y')(10)))
-        
-    merge(move_left, move_down, move_up, move_right)
-    .subscribe(_ => _())
-  }
 
 // The following simply runs your main function on window load.  Make sure to leave it in place.
 if (typeof window !== "undefined") {
