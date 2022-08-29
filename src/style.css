@@ -5,6 +5,8 @@ H4,
 H5,
 H6,
 TH,
+ol,
+P,
 TD {
     font-family: arial, helvetica, sans-serif;
 }
@@ -12,6 +14,16 @@ TD {
 H1 {
     font-size: 38px;
     font-family: arial, helvetica, sans-serif;
+    text-align: center;
+}
+
+P{
+
+    text-transform: bold;
+}
+
+ol{
+    text-transform: bold;
 }
 
 svg {
