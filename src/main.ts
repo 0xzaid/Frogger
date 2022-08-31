@@ -18,10 +18,20 @@ function main() {
    *
    * Document your code!
    * 
+   * WHAT I HAVE:
+   * - A frog that can move in 4 directions
+   * - As many rectangles as i want moving across the screen
+   * - Collision between frog and rectangles 
+   * - When collision occurs, game over
+   * 
    * 
    * TODO:
    * - Label which parts inspired/taken from asteroids
    * - Fix comments
+   * - Add score
+   * - Add timer
+   * - Add safe spots at the end
+   * - Add sound
    */
 
   
@@ -38,7 +48,7 @@ function main() {
   
     const FrogConstants = {
       frogStartingPos: [390,750],
-      frogMovementSpeed: 35,
+      frogMovementSpeed: 40,
       frogRadius: 15,
     } as const;
   
@@ -66,7 +76,7 @@ function main() {
       ID: string,
       shape: string,
       speed: number,
-      size?: number[],
+      size: number[],
       color?: string
     }
 
@@ -150,13 +160,13 @@ const createFrog = () => <Body>{
       createEnemy(200, 215, 5, "enemy", "rect")("yellow", EnemyConstants.enemySize),
       createEnemy(600, 95, 7, "enemy", "rect")("red", EnemyConstants.enemySize),
 
-      createEnemy(100, 330, 3, "enemy", "rect")("red", EnemyConstants.enemySize),
-      createEnemy(600, 215, 5, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-      createEnemy(100, 95, 7, "enemy", "rect")("red", EnemyConstants.enemySize),
+      // createEnemy(100, 330, 3, "enemy", "rect")("red", EnemyConstants.enemySize),
+      // createEnemy(600, 215, 5, "enemy", "rect")("yellow", EnemyConstants.enemySize),
+      // createEnemy(100, 95, 7, "enemy", "rect")("red", EnemyConstants.enemySize),
 
-      createEnemy(151, 630, 2, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-      createEnemy(150, 570, 3, "enemy", "rect")("red", EnemyConstants.enemySize),
-      createEnemy(670, 450, 4, "enemy", "rect")("yellow", EnemyConstants.enemySize),
+      // createEnemy(151, 630, 2, "enemy", "rect")("yellow", EnemyConstants.enemySize),
+      // createEnemy(150, 570, 3, "enemy", "rect")("red", EnemyConstants.enemySize),
+      // createEnemy(670, 450, 4, "enemy", "rect")("yellow", EnemyConstants.enemySize),
     ],
     GAME_OVER: false,
   }
@@ -168,6 +178,7 @@ const createFrog = () => <Body>{
       return {...stateNow,
         enemy: stateNow.enemy.map(moveBody),
         time: timePassed,
+        GAME_OVER: stateNow.enemy.some(enemy => collisionDetection(stateNow, stateNow.frog, enemy)),
       };
     }
 
@@ -209,6 +220,35 @@ const createFrog = () => <Body>{
       
     }
 
+    /* Collision detection */
+
+    const collisionDetection = (State: GameState, frog: Body, enemy: Body) =>
+    { 
+      // if (frog.x_coord + frog.size[0] > enemy.x_coord && 
+      //    frog.x_coord < enemy.x_coord + enemy.size[0] && 
+      //    frog.y_coord + frog.size[1] > enemy.y_coord &&
+      //    frog.y_coord < enemy.y_coord + enemy.size[1])
+
+      // if (frog.x_coord > enemy.x_coord && frog.x_coord < enemy.x_coord + enemy.size[0] && frog.y_coord > enemy.y_coord && frog.y_coord < enemy.y_coord + enemy.size[1])
+      var distX = Math.abs(frog.x_coord - enemy.x_coord-enemy.size[1]/2);
+      var distY = Math.abs(frog.y_coord - enemy.y_coord-enemy.size[0]/2);
+
+      if (distX > (enemy.size[1]/2 + frog.size[0])) { return false; }
+      if (distY > (enemy.size[0]/2 + frog.size[0])) { return false; }
+  
+      if (distX <= (enemy.size[1]/2)) { return true; } 
+      if (distY <= (enemy.size[0]/2)) { return true; }
+  
+      var dx=distX-enemy.size[1]/2;
+      var dy=distY-enemy.size[0]/2;
+      
+      if(dx*dx+dy*dy<=(frog.size[0] *frog.size[0])){
+        return <GameState>{
+          ...State,
+          GAME_OVER: true,
+        }
+      }
+  }
   
   function updateView(main_state: GameState){
     
@@ -241,6 +281,18 @@ const createFrog = () => <Body>{
         :
         canvas.appendChild(updateBody)
         return updateBody;
+      }
+
+      
+      if(main_state.GAME_OVER) {
+        mainGameStream.unsubscribe();
+        const v = document.createElementNS(svg.namespaceURI, "text")!;
+        v.setAttribute("x", `${CanvasConstants.canvasSize.width/6}`);
+        v.setAttribute("y", `${CanvasConstants.canvasSize.height/1.8}`);
+        v.setAttribute("style", "fill: red; stroke: red; stroke-width: 1px;");
+        v.setAttribute("class", "gameover");
+        v.textContent = "Game Over";
+        svg.appendChild(v);
       }
       
 
