@@ -15,13 +15,41 @@ TD {
 
 H1 {
     font-size: 38px;
-    font-family: arial, helvetica, sans-serif;
+    font-family: 'Courier New', monospace;
     text-align: center;
+    color: #0FFF50;
+    border:#0FFF50 1px solid;
+    border-style: dashed;
+    border-color: #0FFF50;
+    border-width: 1.5px;
+    font-style: bold;
+    border-collapse: separate;
+    font-weight: 700;
+    font-variant-caps: all-petite-caps;
+    text-shadow: 10px 10px 10px blueviolet;
+    font-size: 350%;
+}
+
+H2 {
+    color: #0FFF50;
+    font-style: bold;
+    text-shadow: 10px 10px 10px blueviolet;
+}
+
+table {
+    border: 1px solid #0FFF50;
+    color: #0FFF50;
+    font-style: bold;
+    text-shadow: 10px 10px 10px blueviolet;
 }
 
 P{
-
-    text-transform: bold;
+    color: #0FFF50;
+    font-style: bold;
+    text-shadow: 10px 10px 10px blueviolet;
+    border: 1px solid #0FFF50;
+    position: absolute;
+    text-justify: auto;
 }
 
 ol{

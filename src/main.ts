@@ -65,6 +65,7 @@ function main() {
       LIGHT_GREEN: "#90EE90",
       LIGHT_BLUE: "#add8e6",
       DARK_GREEN: "#228B22",
+      NEON_GREEN: "#0FFF50",
       GREEN_GRADIENT: "linear-gradient(to bottom, #339933 0%, #003300 100%)"
     }
 
@@ -99,7 +100,8 @@ function main() {
   /* Customizing the canvas and document */
 
   // Changing page background to green gradient 
-  document.body.style.background = Colors.GREEN_GRADIENT;
+  // document.body.style.background = Colors.GREEN_GRADIENT;
+  document.body.style.background = "url('https://imgur.com/oopmRob.jpg')";
   
   // change canvas size
   svg.setAttribute("width", `${CanvasConstants.canvasSize.width}`);
@@ -109,8 +111,12 @@ function main() {
   svg.style.backgroundImage = "url('https://i.imgur.com/9TmTyuu.png')";
   // making the background image the same size as the canvas
   svg.style.backgroundSize = `${CanvasConstants.canvasSize.width}px ${CanvasConstants.canvasSize.height}px`;
+  // adding a canvas border
+  svg.style.border = "5px solid blueviolet"; 
+
+
   // centering the canvas
-  svg.setAttribute("transform", `translate(540,-150)`);
+  svg.setAttribute("transform", `translate(540,-200)`);
   
   /* Frog class */
 const createFrog = () => <Body>{
