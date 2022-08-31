@@ -1,38 +1,27 @@
 <html>
   <head>
     <title>FIT2102 A1 2022</title>
-    <script src="../dist/main.js"></script>
+
   </head>
   <body>
-    <h1 >Classic Frogger Arcade Game!</h1>
-    <P> 
-      How to play:
-      <ol>
-        <ol>Use the WASD key buttons on the keyboard to move the frog.</ol>
-        <ol>Avoid the obstacles and animals in the way</ol>
-        <ol>Avoid falling in water</ol>
-      </ol>
+    <h1 >Classic Frogger!</h1>
+    <h2>Controls:</h2>
+    <table>
+        <!-- <tr><td>Thrust</td><td>Up Arrow</td></tr> -->
+        <tr><td>Move Up &#8594</td><td><div id="W" class="key">W</div></td></tr>
+        <tr><td>Move Lef &#8594</td><td><div id=" A" class="key">A</div></td></tr>
+        <tr><td>Move Back &#8594</td><td><div id="S" class="key">S</div></td></tr>
+        <tr><td>Move Right &#8594</td><td><div id="D" class="key">D</div></td></tr>
+        <tr><td>Restart &#8594</td><td>F5</td></tr>
+    </table>
         
         
     </P>
     <svg id="svgCanvas" width="800" height="800">
       <g>
-        <ellipse id="frog" fill="purple" style="fill:lightgreen;stroke:darkgreen;stroke-width:4"/>
+        <ellipse id="frog" style="fill:lightgreen;stroke:darkgreen;stroke-width:4"/>
       </g>
     </svg>
-    
-    <div id="controls" >
-      <h2>Controls:</h2>
-      <table>
-          <!-- <tr><td>Thrust</td><td>Up Arrow</td></tr> -->
-          <tr><td>Move Up</td><td><div id="W" class="key">W</div></td></tr>
-          <tr><td>Move Left</td><td><div id=" A" class="key">A</div></td></tr>
-          <tr><td>Move Back</td><td><div id="S" class="key">S</div></td></tr>
-          <tr><td>Move Right</td><td><div id="D" class="key" style="width:50px">D</div></td></tr>
-          <tr><td>Restart Game</td><td>F5</td></tr>
-      </table>
-      </div>
-
   </body>
   
 </html>
