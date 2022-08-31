@@ -1,6 +1,7 @@
 <html>
   <head>
     <title>FIT2102 A1 2022</title>
+    <script src="../dist/main.js"></script>
   </head>
   <body>
     <h1 >Classic Frogger Arcade Game!</h1>
@@ -14,7 +15,24 @@
         
         
     </P>
-    <svg id="svgCanvas" width="600" height="600"></svg>
-    <object id="frog" data="frog-svgrepo-com.svg" width="300" height="300"> </object>
+    <svg id="svgCanvas" width="800" height="800">
+      <g>
+        <ellipse id="frog" fill="purple" style="fill:lightgreen;stroke:darkgreen;stroke-width:4"/>
+      </g>
+    </svg>
+    
+    <div id="controls" >
+      <h2>Controls:</h2>
+      <table>
+          <!-- <tr><td>Thrust</td><td>Up Arrow</td></tr> -->
+          <tr><td>Move Up</td><td><div id="W" class="key">W</div></td></tr>
+          <tr><td>Move Left</td><td><div id=" A" class="key">A</div></td></tr>
+          <tr><td>Move Back</td><td><div id="S" class="key">S</div></td></tr>
+          <tr><td>Move Right</td><td><div id="D" class="key" style="width:50px">D</div></td></tr>
+          <tr><td>Restart Game</td><td>F5</td></tr>
+      </table>
+      </div>
+
   </body>
+  
 </html>
