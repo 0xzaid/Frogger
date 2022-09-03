@@ -48,7 +48,7 @@ function main() {
   
     const FrogConstants = {
       frogStartingPos: [390,750],
-      frogMovementSpeed: 40,
+      frogMovementSpeed: 45,
       frogRadius: 15,
     } as const;
   
@@ -93,15 +93,19 @@ function main() {
 
     /* All classes are here */
     
-    /* Game actions */
+    /* 
+      Game actions 
+      Inspired by Asteroids
+    */
+
     class Move{constructor(public readonly moveX: number, readonly moveY: number){}}
     class Tick{constructor(public readonly timePassed: number){}}
 
   /* Customizing the canvas and document */
 
   // Changing page background to green gradient 
-  // document.body.style.background = Colors.GREEN_GRADIENT;
-  document.body.style.background = "url('https://imgur.com/oopmRob.jpg')";
+  document.body.style.background = Colors.GREEN_GRADIENT;
+  //document.body.style.background = "url('https://imgur.com/oopmRob.jpg')";
   
   // change canvas size
   svg.setAttribute("width", `${CanvasConstants.canvasSize.width}`);
@@ -159,12 +163,12 @@ const createFrog = () => <Body>{
     frog: createFrog(),
     /* enemy parameters: (x,y,speed,id,shape)(color, size)*/
     enemy: [
-      createEnemy(100, 630, 2, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-      createEnemy(500, 570, 3, "enemy", "rect")("red", EnemyConstants.enemySize),
-      createEnemy(300, 450, 4, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-      createEnemy(400, 330, 3, "enemy", "rect")("red", EnemyConstants.enemySize),
+      createEnemy(100, 645, 2, "enemy", "rect")("yellow", EnemyConstants.enemySize),
+      createEnemy(500, 575, -3, "enemy", "rect")("red", EnemyConstants.enemySize),
+      createEnemy(300, 455, 4, "enemy", "rect")("yellow", EnemyConstants.enemySize),
+      createEnemy(400, 335, -3, "enemy", "rect")("red", EnemyConstants.enemySize),
       createEnemy(200, 215, 5, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-      createEnemy(600, 95, 7, "enemy", "rect")("red", EnemyConstants.enemySize),
+      createEnemy(600, 95, -7, "enemy", "rect")("red", EnemyConstants.enemySize),
 
       // createEnemy(100, 330, 3, "enemy", "rect")("red", EnemyConstants.enemySize),
       // createEnemy(600, 215, 5, "enemy", "rect")("yellow", EnemyConstants.enemySize),
@@ -204,49 +208,57 @@ const createFrog = () => <Body>{
     // FPS setter 
     const gameClock = interval(10).pipe(map(timePassed => new Tick(timePassed))),
 
-      /* Frog controls/movement */
+      /* 
+        Frog controls/movement
+        Inspired from FRP asteroids game
+        Avoiding hard corded movement values
+      */
 
-    keyPressed = <T>(e:Event, k:Key, result:()=>T)=>
+    movementObservable = <T>(e:Event, k:Key, result:()=>T)=>
     fromEvent<KeyboardEvent>(document,e)
       .pipe(
         filter(({code})=>code === k),
-        filter(({repeat})=>!repeat),
         map(result)),
 
-        moveLeft = keyPressed('keydown', 'KeyA', () => new Move(-FrogConstants.frogMovementSpeed, 0)),
-        moveRight = keyPressed('keydown', 'KeyD', () => new Move(FrogConstants.frogMovementSpeed, 0)),
-        moveUp = keyPressed('keydown', 'KeyW', () => new Move(0, -FrogConstants.frogMovementSpeed)),
-        moveDown = keyPressed('keydown', 'KeyS', () => new Move(0, FrogConstants.frogMovementSpeed))
+        PressedA = movementObservable('keydown', 'KeyA', () => new Move(-FrogConstants.frogMovementSpeed, 0)),
+        PressedD = movementObservable('keydown', 'KeyD', () => new Move(FrogConstants.frogMovementSpeed, 0)),
+        PressedW = movementObservable('keydown', 'KeyW', () => new Move(0, -FrogConstants.frogMovementSpeed)),
+        PressedS = movementObservable('keydown', 'KeyS', () => new Move(0, FrogConstants.frogMovementSpeed))
 
     // enemy automatic movement
+    // if the enemy reaches the end of the canvas, it will be reset to the start of the canvas
     const moveBody = (enemy: Body) => <Body>
     {
       ...enemy,
-      x_coord: Number(enemy.x_coord) > 800 ? 790-enemy.x_coord + enemy.speed : 1+enemy.x_coord + enemy.speed,
-      
+      x_coord: 
+        // Number(enemy.x_coord) < 0 ? Number(enemy.x_coord) > CanvasConstants.canvasSize.width ? enemy.x_coord + enemy.speed :
+        //   800+enemy.x_coord + enemy.speed: 
+        //   enemy.x_coord + enemy.speed,
+        Number(enemy.x_coord) < 0 ? CanvasConstants.canvasSize.width+enemy.x_coord + enemy.speed : 
+        Number(enemy.x_coord) > CanvasConstants.canvasSize.width ? CanvasConstants.canvasSize.width-enemy.x_coord + enemy.speed :
+        enemy.x_coord + enemy.speed      
     }
 
-    /* Collision detection */
+    /* 
+      Collision detection 
+      Math way to calculate the distance between all points between 
+      rectangles and circles, where rectangles are the obstacles/enemies
+      and the circle is always the frog
+    */
 
     const collisionDetection = (State: GameState, frog: Body, enemy: Body) =>
     { 
-      // if (frog.x_coord + frog.size[0] > enemy.x_coord && 
-      //    frog.x_coord < enemy.x_coord + enemy.size[0] && 
-      //    frog.y_coord + frog.size[1] > enemy.y_coord &&
-      //    frog.y_coord < enemy.y_coord + enemy.size[1])
 
-      // if (frog.x_coord > enemy.x_coord && frog.x_coord < enemy.x_coord + enemy.size[0] && frog.y_coord > enemy.y_coord && frog.y_coord < enemy.y_coord + enemy.size[1])
-      var distX = Math.abs(frog.x_coord - enemy.x_coord-enemy.size[1]/2);
-      var distY = Math.abs(frog.y_coord - enemy.y_coord-enemy.size[0]/2);
-
-      if (distX > (enemy.size[1]/2 + frog.size[0])) { return false; }
-      if (distY > (enemy.size[0]/2 + frog.size[0])) { return false; }
+      // calculating the collision when frog is a circle, and enemy is a rectangle
+      const distX = Math.abs(frog.x_coord - enemy.x_coord-enemy.size[1]/2);
+      const distY = Math.abs(frog.y_coord - enemy.y_coord-enemy.size[0]/2);
+      distX > (enemy.size[1]/2 + frog.size[0]) ? false : true
+      distY > (enemy.size[0]/2 + frog.size[0]) ? false : true
+      distX <= (enemy.size[1]/2) ? true : false
+      distY <= (enemy.size[0]/2) ? true : false
   
-      if (distX <= (enemy.size[1]/2)) { return true; } 
-      if (distY <= (enemy.size[0]/2)) { return true; }
-  
-      var dx=distX-enemy.size[1]/2;
-      var dy=distY-enemy.size[0]/2;
+      const dx=distX-enemy.size[1]/2;
+      const dy=distY-enemy.size[0]/2;
       
       if(dx*dx+dy*dy<=(frog.size[0] *frog.size[0])){
         return <GameState>{
@@ -255,6 +267,7 @@ const createFrog = () => <Body>{
         }
       }
   }
+  
   
   function updateView(main_state: GameState){
     
@@ -335,10 +348,10 @@ const createFrog = () => <Body>{
   /* merge into 1 stream */
   const mainGameStream = merge(
     gameClock,
-    moveLeft,
-    moveRight,
-    moveUp,
-    moveDown,
+    PressedA,
+    PressedD,
+    PressedW,
+    PressedS,
   ).pipe(scan(currentState, initialState)).subscribe(updateView);
 
 }
@@ -351,3 +364,19 @@ if (typeof window !== "undefined") {
   };
 }
 
+/*
+
+// Frog which can move forwards, backwards, left, and right using one of the
+// keyboard or mouse
+// Multiple rows of objects (at least 6) appear and move across the screen
+// Objects move at different speeds and directions (left-right)
+-
+Correct collision behaviour (defined above) including at least one ground
+section and one river section
+For minimum requirements, you do not need to include enemies
+// Game ends when the Frog dies
+Indicate the score for the player
+Player scores points by landing the Frog in a distinct target area
+
+
+*/
