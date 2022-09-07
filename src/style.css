@@ -11,6 +11,9 @@ TD {
     font-family: arial, helvetica, sans-serif;
 }
 
+text{
+    background-color: blue;
+}   
 
 
 H1 {
@@ -56,8 +59,11 @@ ol{
     text-transform: bold;
 }
 
+
+
 svg {
     background-color: rgb(41, 41, 36);
+    position: absolute;
 }
 
 p.highlight {

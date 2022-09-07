@@ -47,17 +47,16 @@ function main() {
     }
   
     const FrogConstants = {
-      frogStartingPos: [390,750],
-      frogMovementSpeed: 45,
-      frogRadius: 15,
+      frogStartingPos: [390,780],
+      frogMovementSpeed:52,
+      frogRadius: 20,
     } as const;
   
     /* Enemy refers to obstacles or objects that could end the game when collided to */
     const EnemyConstants = {
       enemyMovementSpeed: 10,
-      enemySize: [45,100]
+      enemySize: [57,80]
     } as const;
-
 
     /* Document, canvas, & custom color information */
     const Colors = {
@@ -66,8 +65,17 @@ function main() {
       LIGHT_BLUE: "#add8e6",
       DARK_GREEN: "#228B22",
       NEON_GREEN: "#0FFF50",
-      GREEN_GRADIENT: "linear-gradient(to bottom, #339933 0%, #003300 100%)"
+      GREEN_GRADIENT: "linear-gradient(to bottom, #339933 0%, #003300 100%)",
+      BROWN: "#8B4513",
     }
+
+    const RiverConstants = {
+      riverSize: [800, 310],
+      riverSpeed: 0,
+      riverColor: Colors.LIGHT_BLUE,
+      riverPos: [400, 120],
+    } as const;
+    
 
     /* All interfaces are here */
 
@@ -110,6 +118,7 @@ function main() {
   // change canvas size
   svg.setAttribute("width", `${CanvasConstants.canvasSize.width}`);
   svg.setAttribute("height", `${CanvasConstants.canvasSize.height}`);
+  
 
   // getting the iconic frogger background image
   svg.style.backgroundImage = "url('https://i.imgur.com/9TmTyuu.png')";
@@ -117,6 +126,8 @@ function main() {
   svg.style.backgroundSize = `${CanvasConstants.canvasSize.width}px ${CanvasConstants.canvasSize.height}px`;
   // adding a canvas border
   svg.style.border = "5px solid blueviolet"; 
+
+  svg.style.transform = "translate(540px, -30px)";
 
 
   // centering the canvas
@@ -147,13 +158,20 @@ const createFrog = () => <Body>{
      color: color
    }
 
+  const ActionsOnCollision = (frog: Body, enemy: Body) => <Body> {
+    ...frog,
+    x_coord: FrogConstants.frogStartingPos[0],
+    y_coord: FrogConstants.frogStartingPos[1],
+  }
 
   /* Game state type */
   type GameState = Readonly<{
     time: number,
     frog: Body,
     enemy:ReadonlyArray<Body>,
+    score: number, 
     GAME_OVER: boolean,
+    river: ReadonlyArray<Body>
   }>
 
   /* Initial state*/
@@ -163,22 +181,31 @@ const createFrog = () => <Body>{
     frog: createFrog(),
     /* enemy parameters: (x,y,speed,id,shape)(color, size)*/
     enemy: [
-      createEnemy(100, 645, 2, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-      createEnemy(500, 575, -3, "enemy", "rect")("red", EnemyConstants.enemySize),
-      createEnemy(300, 455, 4, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-      createEnemy(400, 335, -3, "enemy", "rect")("red", EnemyConstants.enemySize),
-      createEnemy(200, 215, 5, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-      createEnemy(600, 95, -7, "enemy", "rect")("red", EnemyConstants.enemySize),
+      createEnemy(10, 685, 2, "enemy", "rect")("yellow", EnemyConstants.enemySize),
+      createEnemy(20, 685-60, -3, "enemy", "rect")("red", EnemyConstants.enemySize),
+      //createEnemy(30, 685-60-60, 4, "enemy", "rect")("yellow", EnemyConstants.enemySize),
+      createEnemy(40, 685-60-60-60, 5, "enemy", "rect")("yellow", EnemyConstants.enemySize),
+      createEnemy(50, 685-60-60-60-60, -7, "enemy", "rect")("red", EnemyConstants.enemySize),
 
       // createEnemy(100, 330, 3, "enemy", "rect")("red", EnemyConstants.enemySize),
       // createEnemy(600, 215, 5, "enemy", "rect")("yellow", EnemyConstants.enemySize),
       // createEnemy(100, 95, 7, "enemy", "rect")("red", EnemyConstants.enemySize),
 
+      // CREATE LOGS
+      createEnemy(186, 334, -0.5, "enemy", "rect")(Colors.BROWN, [EnemyConstants.enemySize[0], EnemyConstants.enemySize[1]+100]),
+      createEnemy(600, 334-57, 0.5, "enemy", "rect")(Colors.BROWN, [EnemyConstants.enemySize[0], EnemyConstants.enemySize[1]+100]),
+      createEnemy(500, 334-57-57, -0.5, "enemy", "rect")(Colors.BROWN, [EnemyConstants.enemySize[0], EnemyConstants.enemySize[1]+100]),
+      
       // createEnemy(151, 630, 2, "enemy", "rect")("yellow", EnemyConstants.enemySize),
       // createEnemy(150, 570, 3, "enemy", "rect")("red", EnemyConstants.enemySize),
       // createEnemy(670, 450, 4, "enemy", "rect")("yellow", EnemyConstants.enemySize),
+
+      // RIVER 
+      
     ],
+    score: 0,
     GAME_OVER: false,
+    river: []
   }
 
 
@@ -203,9 +230,6 @@ const createFrog = () => <Body>{
     }
     : tick(stateNow, eventNow.timePassed) 
 
-
- 
-    // FPS setter 
     const gameClock = interval(10).pipe(map(timePassed => new Tick(timePassed))),
 
       /* 
@@ -232,45 +256,75 @@ const createFrog = () => <Body>{
       ...enemy,
       x_coord: 
         // Number(enemy.x_coord) < 0 ? Number(enemy.x_coord) > CanvasConstants.canvasSize.width ? enemy.x_coord + enemy.speed :
-        //   800+enemy.x_coord + enemy.speed: 
-        //   enemy.x_coord + enemy.speed,
-        Number(enemy.x_coord) < 0 ? CanvasConstants.canvasSize.width+enemy.x_coord + enemy.speed : 
-        Number(enemy.x_coord) > CanvasConstants.canvasSize.width ? CanvasConstants.canvasSize.width-enemy.x_coord + enemy.speed :
+        Number(enemy.x_coord)+enemy.size[1] < 0 ? CanvasConstants.canvasSize.width+enemy.x_coord+enemy.size[1] + enemy.speed : 
+        Number(enemy.x_coord) > CanvasConstants.canvasSize.width ? CanvasConstants.canvasSize.width-enemy.x_coord-enemy.size[1] + enemy.speed :
         enemy.x_coord + enemy.speed      
     }
 
     /* 
       Collision detection 
-      Math way to calculate the distance between all points between 
+      calculate the distance between all points between 
       rectangles and circles, where rectangles are the obstacles/enemies
       and the circle is always the frog
     */
+
+    const FrogAndLogsInteraction = (frog: Body, log: Body) => <Body> {
+      ...frog,
+      x_coord: frog.x_coord + log.speed,
+    }
 
     const collisionDetection = (State: GameState, frog: Body, enemy: Body) =>
     { 
 
       // calculating the collision when frog is a circle, and enemy is a rectangle
+
       const distX = Math.abs(frog.x_coord - enemy.x_coord-enemy.size[1]/2);
       const distY = Math.abs(frog.y_coord - enemy.y_coord-enemy.size[0]/2);
       distX > (enemy.size[1]/2 + frog.size[0]) ? false : true
       distY > (enemy.size[0]/2 + frog.size[0]) ? false : true
       distX <= (enemy.size[1]/2) ? true : false
       distY <= (enemy.size[0]/2) ? true : false
-  
+
+      // collision between frog and river
+      /*
+      ok so: RIVER should be the upper half? but before the end area
+        RIVER START: CanvasConstants.canvasSize.height/2 to CanvasConstants.canvasSize.height-100
+      */
+
+      // const OnRiver = frog.y_coord > RiverConstants.riverSize[1]? true : false
+      const OnRiver = frog.y_coord < RiverConstants.riverPos[0] ? frog.y_coord > RiverConstants.riverPos[1] ? true : false : false;
       const dx=distX-enemy.size[1]/2;
       const dy=distY-enemy.size[0]/2;
+
+
+      const FrogAndObjectCollided = (enemy.color != Colors.BROWN) ? dx*dx+dy*dy<=(frog.size[0] *frog.size[0]) : false
       
-      if(dx*dx+dy*dy<=(frog.size[0] *frog.size[0])){
+
+      // const FrogAndObjectCollided =  dx*dx+dy*dy<=(frog.size[0] *frog.size[0]) 
+      if(FrogAndObjectCollided){
         return <GameState>{
           ...State,
           GAME_OVER: true,
         }
       }
+      if(OnRiver){
+        return <GameState>{
+          ...State,
+          GAME_OVER: true,
+        }
+      }
+        
   }
   
   
   function updateView(main_state: GameState){
     
+    // Update score
+    const score = document.getElementById("score")!;
+    score.textContent = `Score: ${main_state.score}`
+
+
+    // updating circles and rectangles
     const updateBodyView = (body: Body, canvas: HTMLElement) => {
       
       const createBodyView = () => {
@@ -302,7 +356,7 @@ const createFrog = () => <Body>{
         return updateBody;
       }
 
-      
+  
       if(main_state.GAME_OVER) {
         mainGameStream.unsubscribe();
         const v = document.createElementNS(svg.namespaceURI, "text")!;
@@ -318,11 +372,13 @@ const createFrog = () => <Body>{
     //Updating circle objects
     const moveFrog = () =>
     {
-      updateBody.setAttribute("cx", String(body.x_coord))
-      updateBody.setAttribute("cy", String(body.y_coord))
-      updateBody.setAttribute("rx", String(FrogConstants.frogRadius))  
-      updateBody.setAttribute("ry", String(FrogConstants.frogRadius))
+      if(main_state.frog.x_coord > 0 && main_state.frog.x_coord < 800){
+        updateBody.setAttribute("cx", String(body.x_coord))
+        updateBody.setAttribute("cy", String(body.y_coord))
+        updateBody.setAttribute("rx", String(FrogConstants.frogRadius))  
+        updateBody.setAttribute("ry", String(FrogConstants.frogRadius))
     }
+  }
 
     // Updating enemies
     const moveEnemies = () =>

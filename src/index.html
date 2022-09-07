@@ -12,6 +12,25 @@
   </head>
   <body>
     <h1 >Classic Frogger!</h1>
+    <svg id="svgCanvas">
+      <g>
+          <svg>
+            <rect id="textBackground" width="800" height="22"  x="0",y="200" fill="blueviolet"/>
+            <text id= "score" x= "0  " y= "17" style="
+              fill:rgb(0, 0, 0); 
+              font-weight: bold; 
+              font-size: 21px;
+            "></text>
+            <rect id="river" width="800" height="310"  x = "0" y = "80" fill = "lightblue"  />
+            <rect id="land" width="800" height="300"  x = "0" y = "445" fill = "black"  />
+            <ellipse id="frog" style="
+              fill:lightgreen;
+              stroke:darkgreen;
+              stroke-width:4" 
+              xmlns="https://i.imgur.com/d6Bjbh8.png">
+          </svg>
+      </g>
+    </svg>
     <h2>Controls:</h2>
     <table>
         <tr><td>Move Up &#8594</td><td><div id="W" class="key">W</div></td></tr>
@@ -29,11 +48,7 @@
         
         
     </P>
-    <svg id="svgCanvas" width="800" height="800">
-      <g>
-        <ellipse id="frog" style="fill:lightgreen;stroke:darkgreen;stroke-width:4" xmlns="https://i.imgur.com/d6Bjbh8.png"/>
-      </g>
-    </svg>
+
   </body>
   
 </html>
