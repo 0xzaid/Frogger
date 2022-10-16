@@ -12,7 +12,12 @@ TD {
 }
 
 text{
-    background-color: blue;
+    border:rgb(41, 41, 36);
+    border-radius: "5px";
+    font-style: bold;
+    font-variant-caps: all-petite-caps;
+    text-shadow: 10px 10px 10px blueviolet;
+    font-weight: 600;
 }   
 
 
@@ -48,7 +53,7 @@ table {
 
 P{
     color: #0FFF50;
-    font-style: bold;
+    font-stle: bold;
     text-shadow: 10px 10px 10px blueviolet;
     border: 1px solid #0FFF50;
     position: absolute;

@@ -1,438 +1,561 @@
 import "./style.css";
-import { interval, fromEvent , zip, merge} from "rxjs";
-import { map, filter , scan} from "rxjs/operators";
-
-
+import { fromEvent, interval, merge } from 'rxjs';
+import { map, filter, scan } from 'rxjs/operators';
 
 function main() {
-  /**
-   * Inside this function you will use the classes and functions from rx.js
-   * to add visuals to the svg element in pong.html, animate them, and make them interactive.
-   *
-   * Study and complete the tasks in observable examples first to get ideas.
-   *
-   * Course Notes showing Asteroids in FRP: https://tgdwyer.github.io/asteroids/
-   *
-   * You will be marked on your functional programming style
-   * as well as the functionality that you implement.
-   *
-   * Document your code!
-   * 
-   * WHAT I HAVE:
-   * - A frog that can move in 4 directions
-   * - As many rectangles as i want moving across the screen
-   * - Collision between frog and rectangles 
-   * - When collision occurs, game over
-   * 
-   * 
-   * TODO:
-   * - Label which parts inspired/taken from asteroids
-   * - Fix comments
-   * - Add score
-   * - Add timer
-   * - Add safe spots at the end
-   * - Add sound
-   */
+  const svg = document.querySelector("#svgCanvas") as SVGElement & HTMLElement;
 
-  
-  /**
-   * This is the view for your game to add and update your game elements.
-   */
-   const svg = document.querySelector("#svgCanvas") as SVGElement & HTMLElement;
-  
-
-    /* All constant variables and types */
-    const CanvasConstants = {
-      canvasSize: {width: 800, height: 800},
-    }
-  
-    const FrogConstants = {
-      frogStartingPos: [390,780],
-      frogMovementSpeed:52,
-      frogRadius: 20,
-    } as const;
-  
-    /* Enemy refers to obstacles or objects that could end the game when collided to */
-    const EnemyConstants = {
-      enemyMovementSpeed: 10,
-      enemySize: [57,80]
-    } as const;
-
-    /* Document, canvas, & custom color information */
-    const Colors = {
-      RED: "#FF0000",
-      LIGHT_GREEN: "#90EE90",
-      LIGHT_BLUE: "#add8e6",
-      DARK_GREEN: "#228B22",
-      NEON_GREEN: "#0FFF50",
-      GREEN_GRADIENT: "linear-gradient(to bottom, #339933 0%, #003300 100%)",
-      BROWN: "#8B4513",
-    }
-
-    const RiverConstants = {
-      riverSize: [800, 310],
-      riverSpeed: 0,
-      riverColor: Colors.LIGHT_BLUE,
-      riverPos: [400, 120],
-    } as const;
-    
-
-    /* All interfaces are here */
-
-    /* Basic interface for all object variables */
-
-    interface IBody extends Circle, Rectangle{
-      ID: string,
-      shape: string,
-      speed: number,
-      size: number[],
-      color?: string
-    }
-
-    /* All types are here */
-
-    type Circle = Readonly<{x_coord:number, y_coord:number}>;
-    type Rectangle = Readonly<{x_coord:number, pos_y:number}>;
-
-    type Key = "KeyA" | "KeyD" | "KeyW" | "KeyS";
-    type Event = "keydown" | "keyup";
-
-    type Body = Readonly<IBody>;
-
-    /* All classes are here */
-    
-    /* 
-      Game actions 
-      Inspired by Asteroids
-    */
-
-    class Move{constructor(public readonly moveX: number, readonly moveY: number){}}
-    class Tick{constructor(public readonly timePassed: number){}}
-
-  /* Customizing the canvas and document */
-
-  // Changing page background to green gradient 
-  document.body.style.background = Colors.GREEN_GRADIENT;
-  //document.body.style.background = "url('https://imgur.com/oopmRob.jpg')";
-  
-  // change canvas size
-  svg.setAttribute("width", `${CanvasConstants.canvasSize.width}`);
-  svg.setAttribute("height", `${CanvasConstants.canvasSize.height}`);
-  
-
-  // getting the iconic frogger background image
-  svg.style.backgroundImage = "url('https://i.imgur.com/9TmTyuu.png')";
-  // making the background image the same size as the canvas
-  svg.style.backgroundSize = `${CanvasConstants.canvasSize.width}px ${CanvasConstants.canvasSize.height}px`;
-  // adding a canvas border
-  svg.style.border = "5px solid blueviolet"; 
-
-  svg.style.transform = "translate(540px, -30px)";
-
-
-  // centering the canvas
-  svg.setAttribute("transform", `translate(540,-200)`);
-  
-  /* Frog class */
-const createFrog = () => <Body>{
-     ID: "frog",
-     shape: "circle",
-     x_coord: FrogConstants.frogStartingPos[0],
-     y_coord: FrogConstants.frogStartingPos[1],
-     speed: 0,
-     color: Colors.LIGHT_GREEN,
-     size: [FrogConstants.frogRadius, FrogConstants.frogRadius]
-}
- 
- /* Creating the enemies/obstacles that could end the game for the user */
-
- const createEnemy = (x: number, y: number, speed: number, enemyId: string, shape: string) => 
- (color: string, size: Readonly<number[]>) => 
- <Body>{
-     ID: enemyId + (x + ""),
-     shape: shape,
-     x_coord: x,
-     y_coord: y,
-     speed: speed,
-     size: size,
-     color: color
-   }
-
-  const ActionsOnCollision = (frog: Body, enemy: Body) => <Body> {
-    ...frog,
-    x_coord: FrogConstants.frogStartingPos[0],
-    y_coord: FrogConstants.frogStartingPos[1],
+  // storing custom colors
+  const Colors = {
+    RED: "#ab2e46",
+    LIGHT_GREEN: "#90EE90",
+    LIGHT_BLUE: "#add8e6",
+    DARK_BLUE: "#0000FF",
+    DARK_GREEN: "#228B22",
+    NEON_GREEN: "#0FFF50",
+    GREEN: "#7cfc00",
+    GREEN_GRADIENT: "linear-gradient(to bottom, #339933 0%, #003300 100%)",
+    BROWN: "#8B4513",
+    CREAM: "#fff0c3",
+    YELLOW: "#fff700",
   }
 
-  /* Game state type */
-  type GameState = Readonly<{
+  document.body.style.background = Colors.GREEN_GRADIENT;  // changing background color
+  svg.style.border = "5px solid blueviolet";               // adding a border around canvas
+  svg.style.transform = "translate(540px, -30px)";         // centering canvas
+
+  // Store constants
+
+  /*
+  * All the constants variables are stored her
+  */
+  const GameConstants =
+    {
+      points: 50
+    } as const;
+  const riverConstants = {
+    start: 280,
+    end: 120,
+  }
+  const FrogConstants =
+  {
+    start: { x: 400, y: 540 },
+    distance: 40,
+    radius: 14,
+  }
+  const EnemyConstants =
+  {
+    size: 38,
+  }
+  const CanvasConstants =
+  {
+    size: 800,
+  }
+
+  /* 
+  * Game transitions
+  * taken from: https://tgdwyer.github.io/asteroids/
+  */
+  class Tick { constructor(public readonly elapsed: number) { } }
+  class Movement { constructor(public readonly x_move: number, readonly y_move: number) { } }  // A move state
+
+  /* 
+  * Object types and interface
+  * taken from: https://tgdwyer.github.io/asteroids/
+  */
+  type Circle = Readonly<{ x_coord: number, y_coord: number }>
+  type Rectangle = Readonly<{ x_coord: number, y_coord: number }>
+  type Key = 'KeyA' | 'KeyD' | 'KeyW' | 'KeyS' | 'KeyR'
+  type Event = 'keydown' | 'keyup'
+  interface IBody extends Circle, Rectangle {
+    ID: string,
+    size: number,
+    shape: string,
+    speed: number,
+    lifeCount: number,
+    func: (_: Body) => Body
+    width: number,
+    color: string,
+  }
+  type Body = Readonly<IBody>;
+
+  /*
+   * Taken from: https://tgdwyer.github.io/asteroids/
+   */
+  type State = Readonly<{
     time: number,
-    frog: Body,
-    enemy:ReadonlyArray<Body>,
-    score: number, 
-    GAME_OVER: boolean,
-    river: ReadonlyArray<Body>
+    gameScore: number,
+    frogger: Body,
+    gameOver: boolean,
+
+    /*
+    * Creating objects for the game
+    */
+    vehicles: ReadonlyArray<Body>,
+    logs: ReadonlyArray<Body>,
+    safety: ReadonlyArray<Body>,
+    outOfBounds: ReadonlyArray<Body>,
   }>
 
-  /* Initial state*/
+  /*
+   * Creating the frogger main character
+   * Similar to createShip function in https://tgdwyer.github.io/asteroids/
+   */
 
-  const initialState: GameState = {
-    time: 0,
-    frog: createFrog(),
-    /* enemy parameters: (x,y,speed,id,shape)(color, size)*/
-    enemy: [
-      createEnemy(10, 685, 2, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-      createEnemy(20, 685-60, -3, "enemy", "rect")("red", EnemyConstants.enemySize),
-      //createEnemy(30, 685-60-60, 4, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-      createEnemy(40, 685-60-60-60, 5, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-      createEnemy(50, 685-60-60-60-60, -7, "enemy", "rect")("red", EnemyConstants.enemySize),
+  const createFrogger = (ID: string, shapeID: string, x: number, y: number, speed: number, size: number, width: number, lifeCount: number) =>
+    <Body>{
+      ID: ID,
+      shape: shapeID,
+      x_coord: x,
+      y_coord: y,
+      speed: speed,
+      size: size,
+      width: width,
+      lifeCount: lifeCount
+    }
+  /*
+  * This function is used to create the vehicles, logs, safety, and the outOfBounds objects
+  * This is because all of those objects have the similar properties due their shape
+  */
+  const createRectangle = (ID: string, x: number, y: number, speed: number, shape: string,
+    color: string, size: number, width: number) =>
+    <Body>{
+      x_coord: x,
+      y_coord: y,
+      ID: ID,
+      shape: shape,
+      speed: speed,
+      size: size,
+      width: width,
+      color: color,
+    }
 
-      // createEnemy(100, 330, 3, "enemy", "rect")("red", EnemyConstants.enemySize),
-      // createEnemy(600, 215, 5, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-      // createEnemy(100, 95, 7, "enemy", "rect")("red", EnemyConstants.enemySize),
-
-      // CREATE LOGS
-      createEnemy(186, 334, -0.5, "enemy", "rect")(Colors.BROWN, [EnemyConstants.enemySize[0], EnemyConstants.enemySize[1]+100]),
-      createEnemy(600, 334-57, 0.5, "enemy", "rect")(Colors.BROWN, [EnemyConstants.enemySize[0], EnemyConstants.enemySize[1]+100]),
-      createEnemy(500, 334-57-57, -0.5, "enemy", "rect")(Colors.BROWN, [EnemyConstants.enemySize[0], EnemyConstants.enemySize[1]+100]),
-      
-      // createEnemy(151, 630, 2, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-      // createEnemy(150, 570, 3, "enemy", "rect")("red", EnemyConstants.enemySize),
-      // createEnemy(670, 450, 4, "enemy", "rect")("yellow", EnemyConstants.enemySize),
-
-      // RIVER 
-      
-    ],
-    score: 0,
-    GAME_OVER: false,
-    river: []
+  /*
+  * Getter function for number of lives of frogger
+  */
+  const alive = (frogger: Body): boolean => {
+    return (frogger.lifeCount >= 1)
   }
 
 
-    /* tick function */
-    const tick = (stateNow: GameState , timePassed: number) =>
+  /*
+  * What happens when it is game over
+  */
+  const endGame = (theState: State) => <State>
     {
-      return {...stateNow,
-        enemy: stateNow.enemy.map(moveBody),
-        time: timePassed,
-        GAME_OVER: stateNow.enemy.some(enemy => collisionDetection(stateNow, stateNow.frog, enemy)),
-      };
+      ...theState,
+      frogger:
+      {
+        // resetting the frogger to the starting position
+        ...theState.frogger,
+        x_coord: FrogConstants.start.x,
+        y_coord: FrogConstants.start.y
+      },
+      // end game
+      gameOver: true
     }
 
-    const currentState = (stateNow: GameState, eventNow: Move | Tick ) => 
-    eventNow instanceof Move ? 
-    {...stateNow,
-      frog: 
-      { ...stateNow.frog,
-        x_coord: stateNow.frog.x_coord + eventNow.moveX,
-        y_coord: stateNow.frog.y_coord + eventNow.moveY
-      }
-    }
-    : tick(stateNow, eventNow.timePassed) 
+  /*
+  * Collision between frogger and various objects functions are here
+  */
 
-    const gameClock = interval(10).pipe(map(timePassed => new Tick(timePassed))),
-
-      /* 
-        Frog controls/movement
-        Inspired from FRP asteroids game
-        Avoiding hard corded movement values
-      */
-
-    movementObservable = <T>(e:Event, k:Key, result:()=>T)=>
-    fromEvent<KeyboardEvent>(document,e)
-      .pipe(
-        filter(({code})=>code === k),
-        map(result)),
-
-        PressedA = movementObservable('keydown', 'KeyA', () => new Move(-FrogConstants.frogMovementSpeed, 0)),
-        PressedD = movementObservable('keydown', 'KeyD', () => new Move(FrogConstants.frogMovementSpeed, 0)),
-        PressedW = movementObservable('keydown', 'KeyW', () => new Move(0, -FrogConstants.frogMovementSpeed)),
-        PressedS = movementObservable('keydown', 'KeyS', () => new Move(0, FrogConstants.frogMovementSpeed))
-
-    // enemy automatic movement
-    // if the enemy reaches the end of the canvas, it will be reset to the start of the canvas
-    const moveBody = (enemy: Body) => <Body>
+  /* 
+  * Similar to BackToSpawn function, but reduces the lifeCount by 1
+  */
+  const deductLife = (frogger: Body) => <Body>
     {
-      ...enemy,
-      x_coord: 
-        // Number(enemy.x_coord) < 0 ? Number(enemy.x_coord) > CanvasConstants.canvasSize.width ? enemy.x_coord + enemy.speed :
-        Number(enemy.x_coord)+enemy.size[1] < 0 ? CanvasConstants.canvasSize.width+enemy.x_coord+enemy.size[1] + enemy.speed : 
-        Number(enemy.x_coord) > CanvasConstants.canvasSize.width ? CanvasConstants.canvasSize.width-enemy.x_coord-enemy.size[1] + enemy.speed :
-        enemy.x_coord + enemy.speed      
+      ...frogger,
+      lifeCount: frogger.lifeCount - 1,
+      x_coord: FrogConstants.start.x,
+      y_coord: FrogConstants.start.y,
+
     }
 
-    /* 
-      Collision detection 
-      calculate the distance between all points between 
-      rectangles and circles, where rectangles are the obstacles/enemies
-      and the circle is always the frog
+  /*
+  * Teleport frogger back to starting x and y positions
+  */
+  const backToSpawn = (frogger: Body) => <Body>
+    {
+      ...frogger,
+      x_coord: FrogConstants.start.x,
+      y_coord: FrogConstants.start.y,
+    }
+
+  /*
+   * The initial state of the game
+   * Inspired from: https://tgdwyer.github.io/asteroids/
+   */
+  const initialState: State =
+  {
+    time: 0,
+    gameScore: 0,
+    frogger:
+      createFrogger("FROGGER", "ellipse", FrogConstants.start.x, FrogConstants.start.y, 0, 0, 0, 5),
+
+    /*
+    
+    * CREATING OBJECTS FOR LOGS, VEHICLES, SAFETY, AND OUTOFBOUNDS
+
     */
 
-    const FrogAndLogsInteraction = (frog: Body, log: Body) => <Body> {
-      ...frog,
-      x_coord: frog.x_coord + log.speed,
-    }
+    vehicles:
+      [
+        /* FIRST ROW */
+        createRectangle("enemy1", 200, 440, 1, "rect", Colors.RED, EnemyConstants.size, 3),
+        createRectangle("enemy2", 400, 440, 1, "rect", Colors.RED, EnemyConstants.size, 3),
+        createRectangle("enemy3", 600, 440, 1, "rect", Colors.RED, EnemyConstants.size, 3),
 
-    const collisionDetection = (State: GameState, frog: Body, enemy: Body) =>
-    { 
+        /* SECOND ROW */
+        createRectangle("enemy4", 100, 400, -2, "rect", Colors.YELLOW, EnemyConstants.size, 2),
+        createRectangle("enemy5", 250, 400, -2, "rect", Colors.YELLOW, EnemyConstants.size, 2),
+        createRectangle("enemy6", 450, 400, -2, "rect", Colors.YELLOW, EnemyConstants.size, 2),
+        createRectangle("enemy7", 600, 400, -2, "rect", Colors.YELLOW, EnemyConstants.size, 2),
 
-      // calculating the collision when frog is a circle, and enemy is a rectangle
+        /* THIRD ROW */
+        createRectangle("enemy8", 100, 360, 1, "rect", Colors.CREAM, EnemyConstants.size, 3),
+        createRectangle("enemy9", 300, 360, 1, "rect", Colors.CREAM, EnemyConstants.size, 3),
+        createRectangle("enemy10", 500, 360, 1, "rect", Colors.CREAM, EnemyConstants.size, 3),
 
-      const distX = Math.abs(frog.x_coord - enemy.x_coord-enemy.size[1]/2);
-      const distY = Math.abs(frog.y_coord - enemy.y_coord-enemy.size[0]/2);
-      distX > (enemy.size[1]/2 + frog.size[0]) ? false : true
-      distY > (enemy.size[0]/2 + frog.size[0]) ? false : true
-      distX <= (enemy.size[1]/2) ? true : false
-      distY <= (enemy.size[0]/2) ? true : false
+        /* FOURTH ROW */
+        createRectangle("enemy11", 0, 320, -2, "rect", Colors.LIGHT_BLUE, EnemyConstants.size, 2),
+        createRectangle("enemy12", 250, 320, -2, "rect", Colors.LIGHT_BLUE, EnemyConstants.size, 2),
+        createRectangle("enemy13", 500, 320, -2, "rect", Colors.LIGHT_BLUE, EnemyConstants.size, 2),
 
-      // collision between frog and river
-      /*
-      ok so: RIVER should be the upper half? but before the end area
-        RIVER START: CanvasConstants.canvasSize.height/2 to CanvasConstants.canvasSize.height-100
-      */
+      ],
+    logs: [
 
-      // const OnRiver = frog.y_coord > RiverConstants.riverSize[1]? true : false
-      const OnRiver = frog.y_coord < RiverConstants.riverPos[0] ? frog.y_coord > RiverConstants.riverPos[1] ? true : false : false;
-      const dx=distX-enemy.size[1]/2;
-      const dy=distY-enemy.size[0]/2;
+      /* FIRST ROW */
+      createRectangle("log1", 0, 240, 1, "rect", Colors.BROWN, EnemyConstants.size, 3),
+      createRectangle("log2", 300, 240, 1, "rect", Colors.BROWN, EnemyConstants.size, 3),
+      createRectangle("log3", 600, 240, 1, "rect", Colors.BROWN, EnemyConstants.size, 3),
 
+      /* SECOND ROW */
+      createRectangle("log4", 0, 200, -1, "rect", Colors.BROWN, EnemyConstants.size, 2),
+      createRectangle("log5", 160, 200, -1, "rect", Colors.BROWN, EnemyConstants.size, 2),
+      createRectangle("log6", 320, 200, -1, "rect", Colors.BROWN, EnemyConstants.size, 2),
+      createRectangle("log7", 480, 200, -1, "rect", Colors.BROWN, EnemyConstants.size, 2),
 
-      const FrogAndObjectCollided = (enemy.color != Colors.BROWN) ? dx*dx+dy*dy<=(frog.size[0] *frog.size[0]) : false
-      
+      /* THIRD ROW */
 
-      // const FrogAndObjectCollided =  dx*dx+dy*dy<=(frog.size[0] *frog.size[0]) 
-      if(FrogAndObjectCollided){
-        return <GameState>{
-          ...State,
-          GAME_OVER: true,
-        }
-      }
-      if(OnRiver){
-        return <GameState>{
-          ...State,
-          GAME_OVER: true,
-        }
-      }
-        
+      createRectangle("log8", 0, 160, 1, "rect", Colors.BROWN, EnemyConstants.size, 3),
+      createRectangle("log9", 300, 160, 1, "rect", Colors.BROWN, EnemyConstants.size, 3),
+      createRectangle("log10", 600, 160, 1, "rect", Colors.BROWN, EnemyConstants.size, 3),
+
+      /* FOURTH ROW */
+      createRectangle("log11", 50, 120, -2, "rect", Colors.BROWN, EnemyConstants.size, 2.4),
+      createRectangle("log12", 250, 120, -2, "rect", Colors.BROWN, EnemyConstants.size, 2.4),
+      createRectangle("log13", 450, 120, -2, "rect", Colors.BROWN, EnemyConstants.size, 2.4),
+
+    ],
+
+    safety: [
+      createRectangle("safety1", 70, 82, 0, "rect", Colors.DARK_BLUE, EnemyConstants.size, 1.5),
+      createRectangle("safety2", 220, 82, 0, "rect", Colors.DARK_BLUE, EnemyConstants.size, 1.5),
+      createRectangle("safety3", 370, 82, 0, "rect", Colors.DARK_BLUE, EnemyConstants.size, 1.5),
+      createRectangle("safety4", 520, 82, 0, "rect", Colors.DARK_BLUE, EnemyConstants.size, 1.5),
+      createRectangle("safety5", 670, 82, 0, "rect", Colors.DARK_BLUE, EnemyConstants.size, 1.5),
+    ],
+
+    outOfBounds: [
+      createRectangle("danger1", 0, 82, 0, "rect", Colors.GREEN, EnemyConstants.size, 1.85),
+      createRectangle("danger2", 129, 82, 0, "rect", Colors.GREEN, EnemyConstants.size, 2.4),
+      createRectangle("danger3", 279, 82, 0, "rect", Colors.GREEN, EnemyConstants.size, 2.4),
+      createRectangle("danger4", 429, 82, 0, "rect", Colors.GREEN, EnemyConstants.size, 2.4),
+      createRectangle("danger5", 579, 82, 0, "rect", Colors.GREEN, EnemyConstants.size, 2.4),
+      createRectangle("danger6", 729, 82, 0, "rect", Colors.GREEN, EnemyConstants.size, 1.85),
+    ],
+    gameOver: false
   }
-  
-  
-  function updateView(main_state: GameState){
-    
-    // Update score
-    const score = document.getElementById("score")!;
-    score.textContent = `Score: ${main_state.score}`
+
+  /* 
+  * All collision related functions are here
+  */
+  // Empty constructor class for Restart
+
+  class Restart { constructor() { } }
+
+  /*
+ * Due to having all the enemy/obstacle objects in a single array, we can check for collisions in that array
+ */
+  const VehicleCollision = (Vehicles: ReadonlyArray<Body>, Frogger: Body, theState: State, i: number = Vehicles.length - 1): boolean => {
+    return i <= 0 ? false : DetectCollision(Vehicles[i - 1], Frogger) ? true : VehicleCollision(Vehicles, Frogger, theState, i - 1)
+  }
+  /*
+* Check if frogger steps on river
+*/
+  const riverCollision = (frogger: Body): boolean => {
+    return (frogger.y_coord > riverConstants.end && frogger.y_coord < riverConstants.start)
+  }
 
 
-    // updating circles and rectangles
-    const updateBodyView = (body: Body, canvas: HTMLElement) => {
-      
-      const createBodyView = () => {
-        // shape of enemy
-        const updateBody = document.createElementNS(canvas.namespaceURI, body.shape);
-        
-        //Set its id
-        updateBody.setAttribute("id", body.ID);
-        
-        //Different steps for different shapes
-        body.shape == "rect" ?
-        (updateBody.setAttribute("x", String(body.x_coord)),
-        updateBody.setAttribute("y", String(body.y_coord)),
-        //Size is an optional variable
-        body.size ?
-          (updateBody.setAttribute("width", String(body.size[1])), 
-          updateBody.setAttribute("height", String(body.size[0])))
-          :
-          0,
-        //Color is an optional variable
-        body.color ?
-          (updateBody.setAttribute("style", "fill: " + body.color + "; stroke: " 
-          + body.color + "; stroke-width: 1px;"))
-          :
-          0,
-        canvas.appendChild(updateBody))
+  const DetectCollision = (frogger: Body, enemy: Body): boolean => {
+    if (enemy.y_coord >= (frogger.y_coord + EnemyConstants.size) || enemy.y_coord <= frogger.y_coord) {
+      return false
+    } else if (enemy.x_coord >= (frogger.x_coord + ((frogger.size * 2.7))) || enemy.x_coord <= frogger.x_coord) {
+      return false
+    } else {
+      return true
+    }
+  }
+  /*
+   * Reduce the number of safety areas when frogger enters 
+   * By changing its position to outside the canvas
+   */
+  const removeSafetyArea = (safety: Body): Body => {
+    return <Body>{
+      ...safety,
+      x_coord: safety.x_coord * - 999999
+    }
+  }
+
+
+  /**
+   * All collisions rules and what should happen to each type of collision
+   */
+  const CollisionRules = (objects: Body[], frogger: Body, state: State): Body => {
+    // Get the all the bodies that can result in a collision and restarting back to the spawn position
+    const VehicleCollision = (objects.map((_) => DetectCollision(_, frogger) ? _ : null).filter((_) => _ ? _ : null))[0]
+    const RiverCollision = riverCollision(frogger)
+
+    // Touched river so we reduce life count
+    if (RiverCollision && !VehicleCollision) {
+      console.log("River Collision")
+      return deductLife(frogger)
+    } else if (VehicleCollision && !RiverCollision) {
+      if (VehicleCollision.ID === "safety1" ||
+        VehicleCollision.ID === "safety2" ||
+        VehicleCollision.ID === "safety3" ||
+        VehicleCollision.ID === "safety4" ||
+        VehicleCollision.ID === "safety5") {
+        console.log("Safety Collision")
+        return backToSpawn(frogger)
+      } else {
+        console.log("Vehicle Collision")
+        return deductLife(frogger)
+      }
+      // Touched vehicle so we reduce life count
+    } else {
+      // No collision, move body along the long using the velocity
+      return moveBody(frogger, VehicleCollision?.speed)
+    }
+  }
+
+  /*
+ * Tick function taken from: https://tgdwyer.github.io/asteroids/
+ */
+  const tick = (s: State, elapsed: number): State => {
+    const Objects = s.vehicles.concat(s.logs).concat(s.safety).concat(s.safety).concat(s.outOfBounds);
+
+    //Check if the frogger is still alive or nottt
+    return alive(s.frogger) ?
+      {
+        ...s,
+        vehicles: s.vehicles.map(enemy => moveBody(enemy)),
+        logs: s.logs.map(log => moveBody(log)),
+        safety: s.safety.map(win => DetectCollision(win, s.frogger) ? removeSafetyArea(win) : win),
+        frogger: CollisionRules(Objects, s.frogger, s),
+        gameScore: VehicleCollision(s.safety, s.frogger, s) ? s.gameScore + GameConstants.points : s.gameScore,
+        time: elapsed,
+      }
+      :
+      endGame(s)
+  }
+
+  /* 
+  * Inspired from: https://tgdwyer.github.io/asteroids/
+  */
+  const reduceState = (s: State, e: Movement | Tick | Restart): State =>
+    // When frogger dies we restart game and reset the lives
+    e instanceof Restart ?
+      s.gameOver ?
+        {
+          ...s, frogger:
+          {
+            ...s.frogger,
+            x_coord: FrogConstants.start.x,
+            y_coord: FrogConstants.start.y,
+            lifeCount: 5
+          },
+          safety: s.safety.map((win) => win.y_coord < 0 ? removeSafetyArea(win) : win),
+          gameScore: 0,
+          gameOver: false
+        }
         :
-        canvas.appendChild(updateBody)
-        return updateBody;
-      }
+        {
+          ...s
+        }
+      :
+      e instanceof Movement ?
+        {
+          ...s,
+          frogger:
+          {
+            ...s.frogger,
+            x_coord: s.frogger.x_coord + e.x_move,
+            y_coord: s.frogger.y_coord + e.y_move
+          }
+        }
+        : tick(s, e.elapsed)
 
-  
-      if(main_state.GAME_OVER) {
-        mainGameStream.unsubscribe();
-        const v = document.createElementNS(svg.namespaceURI, "text")!;
-        v.setAttribute("x", `${CanvasConstants.canvasSize.width/6}`);
-        v.setAttribute("y", `${CanvasConstants.canvasSize.height/1.8}`);
-        v.setAttribute("style", "fill: red; stroke: red; stroke-width: 1px;");
-        v.setAttribute("class", "gameover");
-        v.textContent = "Game Over";
-        svg.appendChild(v);
-      }
-      
 
-    //Updating circle objects
-    const moveFrog = () =>
+  /*
+  * Frogger user controlled movement functions 
+  */
+
+  /*
+  * Taken from https://tgdwyer.github.io/asteroids/
+  * What happens when WASD and R keys are pressed
+   */
+  const
+    gameClock = interval(10).
+      pipe(map(elapsed => new Tick(elapsed))),
+
+    keyObservable = <T>(e: Event, k: Key, result: () => T) =>
+      fromEvent<KeyboardEvent>(document, e)
+        .pipe(
+          filter(({ code }) => code === k),
+          filter(({ repeat }) => !repeat),
+          map(result)),
+
+    // Key events
+    clickedA = keyObservable('keydown', 'KeyA', () => new Movement(-FrogConstants.distance, 0)),
+    clickedD = keyObservable('keydown', 'KeyD', () => new Movement(FrogConstants.distance, 0)),
+    clickedW = keyObservable('keydown', 'KeyW', () => new Movement(0, -FrogConstants.distance)),
+    clickedS = keyObservable('keydown', 'KeyS', () => new Movement(0, FrogConstants.distance)),
+    fullRestart = keyObservable('keydown', 'KeyR', () => new Restart())
+
+
+  /*
+  * Inspired from https://tgdwyer.github.io/asteroids/
+  */
+  const moveBody = (enemy: Body, speed: number = enemy.speed) => <Body>
     {
-      if(main_state.frog.x_coord > 0 && main_state.frog.x_coord < 800){
-        updateBody.setAttribute("cx", String(body.x_coord))
-        updateBody.setAttribute("cy", String(body.y_coord))
-        updateBody.setAttribute("rx", String(FrogConstants.frogRadius))  
-        updateBody.setAttribute("ry", String(FrogConstants.frogRadius))
-    }
-  }
-
-    // Updating enemies
-    const moveEnemies = () =>
-    {
-      updateBody.setAttribute("x", String(body.x_coord))
-      updateBody.setAttribute("y", String(body.y_coord))
+      ...enemy,
+      x_coord:
+        Number(enemy.x_coord) + enemy.size * enemy.width < 0 ?
+          CanvasConstants.size + enemy.x_coord + enemy.size * enemy.width + speed :
+          Number(enemy.x_coord) > CanvasConstants.size ?
+            CanvasConstants.size - enemy.x_coord - enemy.size * enemy.width + speed :
+            enemy.x_coord + enemy.speed
     }
 
-    const updateBody = document.getElementById(body.ID) || createBodyView()
-
-    // only circle is the frog
-    body.shape == "circle" ? moveFrog() : moveEnemies()
-    }
-
-    // Update FROG
-    updateBodyView(main_state.frog , svg)
-    
-    // update enemy
-    main_state.enemy.forEach((enemy => updateBodyView(enemy, svg)))
-  
-  }
-
-  /* merge into 1 stream */
+  /*
+   * Merges all game states into one stream
+   * Derived from: https://tgdwyer.github.io/asteroids/
+   */
   const mainGameStream = merge(
     gameClock,
-    PressedA,
-    PressedD,
-    PressedW,
-    PressedS,
-  ).pipe(scan(currentState, initialState)).subscribe(updateView);
+    fullRestart,
+    clickedW,
+    clickedA,
+    clickedS,
+    clickedD,
+  ).
+    pipe(scan(reduceState, initialState)).
+    subscribe(updateView);
+
+  // to update the score, lives
+  const updateLives = document.getElementById("lives")!,
+    updateScore = document.getElementById("score")!,
+    showGameOverMessage = document.getElementById("gameover")!,
+    showRestartGameMessage = document.getElementById("restart")!
+  /* 
+  * Update the svg scene.  
+  * This is the only impure function in this program
+  * Taken from: https://tgdwyer.github.io/asteroids/
+  */
+  function updateView(s: State) {
+
+
+    updateScore.textContent = String("Score: " + s.gameScore);
+    updateLives.textContent = String("Lives: " + s.frogger.lifeCount);
+
+    // end the game
+    const GameOverScreen = () => {
+      showRestartGameMessage.textContent = "Press \"R\" to Restart"
+      showGameOverMessage.textContent = "Game over!!"
+      svg.appendChild(showRestartGameMessage)
+      svg.appendChild(showGameOverMessage)
+    }
+
+    const continueGame = () => {
+      showRestartGameMessage.textContent = ""
+      showGameOverMessage.textContent = ""
+      svg.appendChild(showRestartGameMessage)
+      svg.appendChild(showGameOverMessage)
+    }
+
+    // check if game is over
+    if (s.gameOver) {
+      GameOverScreen()
+    } else {
+      continueGame()
+    }
+
+
+    /*
+    * Derived from https://tgdwyer.github.io/asteroids/
+    */
+    const
+      updateBodyView = (b: Body, canvas: HTMLElement) => {
+        const createBodyView = () => {
+          // set its attributes
+          const body = document.createElementNS(canvas.namespaceURI, b.shape);
+          body.setAttribute("id", b.ID);
+
+          b.shape == "rect" ?
+            (body.setAttribute("x", String(b.x_coord)),
+              body.setAttribute("y", String(b.y_coord)),
+              body.setAttribute("width", String((b.size * b.width) - 2)),
+              body.setAttribute("height", String(b.size)),
+              b.color ?
+                (body.setAttribute("style", "fill: " + b.color)) : null,
+              canvas.appendChild(body))
+            :
+            canvas.appendChild(body)
+          return body;
+        }
+        // update objects
+        const rectangle = () => {
+          updateBody.setAttribute("x", String(b.x_coord))
+          updateBody.setAttribute("y", String(b.y_coord))
+          updateBody.setAttribute("width", String(b.size * b.width)),
+            updateBody.setAttribute("height", String(b.size))
+        }
+
+        // update frog
+        const frog = () => {
+          updateBody.setAttribute("cx", String(b.x_coord))
+          updateBody.setAttribute("cy", String(b.y_coord))
+          updateBody.setAttribute("rx", String(FrogConstants.radius))
+          updateBody.setAttribute("ry", String(FrogConstants.radius))
+          canvas.appendChild(updateBody)
+        }
+        const updateBody = document.getElementById(b.ID) || createBodyView()
+        // check which object to update
+
+        if (b.ID == "FROGGER") {
+          frog()
+        } else {
+          rectangle()
+        }
+      }
+
+    // Update objects
+    s.vehicles.forEach((body) => updateBodyView(body, svg))
+    s.logs.forEach((body) => updateBodyView(body, svg))
+    s.safety.forEach((body) => updateBodyView(body, svg))
+    s.outOfBounds.forEach((body) => updateBodyView(body, svg))
+    updateBodyView(s.frogger, svg)
+  }
+
+
 
 }
-    
 
 // The following simply runs your main function on window load.  Make sure to leave it in place.
 if (typeof window !== "undefined") {
   window.onload = () => {
-    main()
-  };
+    main();
+  }
 }
-
-/*
-
-// Frog which can move forwards, backwards, left, and right using one of the
-// keyboard or mouse
-// Multiple rows of objects (at least 6) appear and move across the screen
-// Objects move at different speeds and directions (left-right)
--
-Correct collision behaviour (defined above) including at least one ground
-section and one river section
-For minimum requirements, you do not need to include enemies
-// Game ends when the Frog dies
-Indicate the score for the player
-Player scores points by landing the Frog in a distinct target area
-
-
-*/
