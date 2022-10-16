@@ -1,0 +1,76 @@
+<html>
+  <head>
+    <title>FIT2102 A1 2022 FROGGER GAME</title>
+  <script defer src="main.js"></script></head>
+  <body>
+    <h1>FROGGER</h1>
+    <svg id="svgCanvas" width="800" height="600" style="background-color:rgb(37, 37, 37)";>
+      <text
+        id = "score" text-anchor = "right" x = "250" y = "45" fill = "lime" style="font-size: 35;"></text>
+      <text id = "lives" text-anchor = "right" x = "420" y = "45" fill = "lime" style="font-size: 35;"></text>
+      <text id = "gameover" text-anchor = "right" x = "15" y="350" fill = "red" style="font-size: 130;">GAME OVER!!</text> 
+      <text id = "restart" x=150, y=450 text-anchor = "right" fill = "red" style="font-size: 50;">"Press "R" to Restart"</text>
+      <g>
+        <ellipse id = "FROGGER" fill = "green"
+        style="
+        fill:lightgreen;
+        stroke:darkgreen;
+        stroke-width:4"  />
+        
+        <circle id = scored1 fill = "green" cx = "700" cy = "102" r = "14"         
+          style="
+          fill:lightgreen;
+          stroke:darkgreen;
+          stroke-width:4"/>
+
+          <circle id = scored2 fill = "green" cx = "550" cy = "102" r = "14"         
+          style="
+          fill:lightgreen;
+          stroke:darkgreen;
+          stroke-width:4"/>
+
+          <circle id = scored3 fill = "green" cx = "400" cy = "102" r = "14"         
+          style="
+          fill:lightgreen;
+          stroke:darkgreen;
+          stroke-width:4"/>
+
+          <circle id = scored4 fill = "green" cx = "250" cy = "102" r = "14"         
+          style="
+          fill:lightgreen;
+          stroke:darkgreen;
+          stroke-width:4"/>
+
+          <circle id = scored5 fill = "green" cx = "100" cy = "102" r = "14"         
+          style="
+          fill:lightgreen;
+          stroke:darkgreen;
+          stroke-width:4"/>
+
+
+        <rect id = "safeZoneArea1" fill = "rgb(75,0,130)" x = "0" y = 280 width = "800" height = "40" />
+        <rect id = "GreenRowFiller" fill = "lawngreen" x = "0" y = 65 width = "800" height = "20" />
+        <rect id = "riverArea" fill = "lightblue" x = "0" y = "120" width = "800" height = "155" />
+        <rect id = "roadArea" fill = "grey" x = "0" y = "510" width = "800" height = "240" />
+        <rect id = "safeZoneArea2" fill = "rgb(75,0,130)" x = "0" y = 480 width = "800" height = "120" />
+      </g>
+    </svg>
+    <h2>Controls:</h2>
+    <table>
+        <tr><td>Move Up &#8594</td><td><div id="W" class="key">W</div></td></tr>
+        <tr><td>Move Lef &#8594</td><td><div id=" A" class="key">A</div></td></tr>
+        <tr><td>Move Back &#8594</td><td><div id="S" class="key">S</div></td></tr>
+        <tr><td>Move Right &#8594</td><td><div id="D" class="key">D</div></td></tr>
+        <tr><td>Restart &#8594</td><td>R</td></tr>
+    </table>
+    <h2>Game Rules</h2>
+    <p>
+      The objective of the game is to get to the end without <br>
+      crashing into any vehicles or falling the river. <br><br>
+      The player can move up, down, left and right. <br><br>
+      To avoid falling in the river, the player must move <br><br>
+      with the log while standing on top of it <br><br>
+      The player can restart the game by pressing R.<br>
+    </P>
+  </body>
+</html>
