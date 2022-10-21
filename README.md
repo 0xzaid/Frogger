@@ -23,4 +23,4 @@ development process, but are not essential.
 
 ## Play the game in your browser!
 
-[Click here] to play frogger! (https://0xzaid.github.io/Frogger/)
+[Click here](https://0xzaid.github.io/Frogger/) to play frogger! 
