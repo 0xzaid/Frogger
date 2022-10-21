@@ -21,3 +21,6 @@ There are two ways to run the code:
 The development server will have some additional features that help with the
 development process, but are not essential.
 
+## Play the game in your browser!
+
+[Click here] to play frogger! (https://0xzaid.github.io/Frogger/)
